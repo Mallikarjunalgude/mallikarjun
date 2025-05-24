@@ -1,3 +1,5 @@
+// contributed by varun
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -67,10 +69,15 @@ private:
     vector<Account> accounts;
 
 public:
+    BankSystem() {
+        loadFromFile();
+    }
+
     void addAccount() {
         Account acc;
         acc.createAccount();
         accounts.push_back(acc);
+        saveToFile();
         cout << "Account Created Successfully!\n";
     }
 
@@ -100,6 +107,7 @@ public:
         for (auto& acc : accounts) {
             if (acc.getAccountNumber() == accNo) {
                 acc.deposit(amount);
+                saveToFile();
                 cout << "Deposit Successful!\n";
                 return;
             }
@@ -118,6 +126,7 @@ public:
         for (auto& acc : accounts) {
             if (acc.getAccountNumber() == accNo) {
                 acc.withdraw(amount);
+                saveToFile();
                 cout << "Withdrawal Processed.\n";
                 return;
             }
@@ -137,6 +146,7 @@ public:
                 cin.ignore();
                 getline(cin, newName);
                 acc.updateAccount(newName);
+                saveToFile();
                 cout << "Account Updated Successfully!\n";
                 return;
             }
@@ -152,6 +162,7 @@ public:
         for (auto it = accounts.begin(); it != accounts.end(); ++it) {
             if (it->getAccountNumber() == accNo) {
                 accounts.erase(it);
+                saveToFile();
                 cout << "Account Deleted Successfully!\n";
                 return;
             }
@@ -173,6 +184,34 @@ public:
         }
         cout << "Account Not Found!\n";
     }
+
+    void saveToFile() const {
+        ofstream outFile("accounts.dat");
+        for (const auto& acc : accounts) {
+            outFile << acc.getAccountNumber() << '\n'
+                    << acc.getName() << '\n'
+                    << acc.getBalance() << '\n';
+        }
+        outFile.close();
+    }
+
+    void loadFromFile() {
+        ifstream inFile("accounts.dat");
+        accounts.clear();
+        int accNo;
+        string name;
+        double balance;
+
+        while (inFile >> accNo) {
+            inFile.ignore();
+            getline(inFile, name);
+            inFile >> balance;
+            inFile.ignore();
+            accounts.emplace_back(accNo, name, balance);
+        }
+
+        inFile.close();
+    }
 };
 
 int main() {
@@ -193,32 +232,32 @@ int main() {
         cin >> choice;
 
         switch (choice) {
-        case 1:
-            bank.addAccount();
-            break;
-        case 2:
-            bank.displayAccounts();
-            break;
-        case 3:
-            bank.depositToAccount();
-            break;
-        case 4:
-            bank.withdrawFromAccount();
-            break;
-        case 5:
-            bank.updateAccountDetails();
-            break;
-        case 6:
-            bank.deleteAccount();
-            break;
-        case 7:
-            bank.findAccount();
-            break;
-        case 0:
-            cout << "Exiting system...\n";
-            break;
-        default:
-            cout << "Invalid choice. Try again.\n";
+            case 1:
+                bank.addAccount();
+                break;
+            case 2:
+                bank.displayAccounts();
+                break;
+            case 3:
+                bank.depositToAccount();
+                break;
+            case 4:
+                bank.withdrawFromAccount();
+                break;
+            case 5:
+                bank.updateAccountDetails();
+                break;
+            case 6:
+                bank.deleteAccount();
+                break;
+            case 7:
+                bank.findAccount();
+                break;
+            case 0:
+                cout << "Exiting system...\n";
+                break;
+            default:
+                cout << "Invalid choice. Try again.\n";
         }
     } while (choice != 0);
 
