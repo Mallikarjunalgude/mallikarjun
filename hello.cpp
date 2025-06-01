@@ -1,9 +1,21 @@
-// contributed by varun
+// =============================================================================
+// Contribution by Varun
+//
+// Description:
+// Bank Management System in C++ for account operations with file persistence.
+// Includes a new feature: Transaction History per account.
+//
+// Features:
+// - Create, display, update, delete accounts
+// - Deposit and withdraw money
+// - View transaction history with timestamps
+// =============================================================================
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include <ctime>
 using namespace std;
 
 class Account {
@@ -108,6 +120,7 @@ public:
             if (acc.getAccountNumber() == accNo) {
                 acc.deposit(amount);
                 saveToFile();
+                logTransaction(accNo, "Deposit", amount);  // Log deposit
                 cout << "Deposit Successful!\n";
                 return;
             }
@@ -125,9 +138,14 @@ public:
 
         for (auto& acc : accounts) {
             if (acc.getAccountNumber() == accNo) {
-                acc.withdraw(amount);
-                saveToFile();
-                cout << "Withdrawal Processed.\n";
+                if (acc.getBalance() >= amount) {
+                    acc.withdraw(amount);
+                    saveToFile();
+                    logTransaction(accNo, "Withdrawal", amount);  // Log withdrawal
+                    cout << "Withdrawal Processed.\n";
+                } else {
+                    cout << "Insufficient balance!\n";
+                }
                 return;
             }
         }
@@ -185,6 +203,34 @@ public:
         cout << "Account Not Found!\n";
     }
 
+    void viewTransactionHistory() const {
+        int accNo;
+        cout << "Enter Account Number: ";
+        cin >> accNo;
+
+        ifstream logFile("txn_" + to_string(accNo) + ".log");
+        if (!logFile) {
+            cout << "No transaction history found for this account.\n";
+            return;
+        }
+
+        cout << "\n--- Transaction History for Account " << accNo << " ---\n";
+        string line;
+        while (getline(logFile, line)) {
+            cout << line << endl;
+        }
+        logFile.close();
+    }
+
+    void logTransaction(int accNo, const string& type, double amount) const {
+        ofstream logFile("txn_" + to_string(accNo) + ".log", ios::app);
+        time_t now = time(0);
+        string dt = ctime(&now);
+        dt.pop_back(); // Remove newline
+        logFile << dt << " - " << type << ": " << fixed << setprecision(2) << amount << endl;
+        logFile.close();
+    }
+
     void saveToFile() const {
         ofstream outFile("accounts.dat");
         for (const auto& acc : accounts) {
@@ -227,6 +273,7 @@ int main() {
         cout << "5. Update Account\n";
         cout << "6. Delete Account\n";
         cout << "7. Find Account\n";
+        cout << "8. View Transaction History\n";
         cout << "0. Exit\n";
         cout << "Enter your choice: ";
         cin >> choice;
@@ -252,6 +299,9 @@ int main() {
                 break;
             case 7:
                 bank.findAccount();
+                break;
+            case 8:
+                bank.viewTransactionHistory();
                 break;
             case 0:
                 cout << "Exiting system...\n";
